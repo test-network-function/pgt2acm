@@ -18,10 +18,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const (
-	latestSuffix = "-latest"
-)
-
 func usage() {
 	fmt.Println("Usage:\npgt2adm -i <input_dir> -o <output_dir> [-s <schema> -k <kind1,kind2,...,kindn>]")
 	fmt.Println("\nMandatory parameters:\n<input_dir>: the directory holding the PGT template")
@@ -91,7 +87,7 @@ func convertPGTtoACM(outputDir, inputFile, outputFile, schema string, preRenderP
 		return fmt.Errorf("could not unmarshal PolicyGenTemplate data from %s: %s", inputFile, err)
 	}
 
-	rootName := strings.TrimSuffix(policyGenTemp.Metadata.Name, latestSuffix)
+	rootName := policyGenTemp.Metadata.Name
 	acmGenTempConversion := acmformat.AcmGenTemplate{}
 
 	seenPoliciesMap := map[string]bool{}
@@ -226,7 +222,7 @@ const (
 
 // Converts PGT policy to ACM Gen policy
 func convertPGTPolicyToACMGenPolicy(policyGenTemp *pgtformat.PolicyGenTemplate, rootName, policyName, outputDir string) (newPolicy acmformat.PolicyConfig) {
-	newPolicy.Name = rootName + "-" + policyName + latestSuffix
+	newPolicy.Name = rootName + "-" + policyName
 	newPolicy.PolicyAnnotations = make(map[string]string)
 	wave := ""
 	for srcFileIndex := range policyGenTemp.Spec.SourceFiles {
@@ -281,6 +277,6 @@ func convertSimpleMiscellaneousFields(policyGenTemp *pgtformat.PolicyGenTemplate
 	acmGenTempConversion.PolicyDefaults.EvaluationInterval.Compliant = "10m"
 	acmGenTempConversion.PolicyDefaults.EvaluationInterval.NonCompliant = "10s"
 
-	acmGenTempConversion.Metadata.Name = rootName + latestSuffix
+	acmGenTempConversion.Metadata.Name = rootName
 	acmGenTempConversion.PlacementBindingDefaults.Name = rootName + "-placement-binding"
 }

@@ -4,7 +4,7 @@ kind: PolicyGenerator
 metadata:
     name: group-du-standard-latest
 placementBindingDefaults:
-    name: group-du-standard-placement-binding
+    name: group-du-standard-latest-placement-binding
 policyDefaults:
     namespace: ztp-group
     placement:
@@ -29,7 +29,7 @@ policyDefaults:
         compliant: 10m
         noncompliant: 10s
 policies:
-    - name: group-du-standard-config-policy-latest
+    - name: group-du-standard-latest-config-policy
       policyAnnotations:
         ran.openshift.io/ztp-deploy-wave: "10"
       manifests:
