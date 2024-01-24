@@ -230,6 +230,16 @@ func convertPGTPolicyToACMGenPolicy(policyGenTemp *pgtformat.PolicyGenTemplate, 
 			continue
 		}
 		newManifest := acmformat.Manifest{Path: sourceCrPrefix + "/" + policyGenTemp.Spec.SourceFiles[srcFileIndex].FileName}
+
+		// Setting EvaluationInterval
+		if policyGenTemp.Spec.SourceFiles[srcFileIndex].EvaluationInterval.Compliant != pgtformat.UnsetStringValue {
+			newPolicy.EvaluationInterval.Compliant = policyGenTemp.Spec.SourceFiles[srcFileIndex].EvaluationInterval.Compliant
+		}
+
+		if policyGenTemp.Spec.SourceFiles[srcFileIndex].EvaluationInterval.NonCompliant != pgtformat.UnsetStringValue {
+			newPolicy.EvaluationInterval.NonCompliant = policyGenTemp.Spec.SourceFiles[srcFileIndex].EvaluationInterval.NonCompliant
+		}
+
 		newPatch := make(map[string]interface{})
 		hasPatch := false
 		if len(policyGenTemp.Spec.SourceFiles[srcFileIndex].Metadata) != 0 {
@@ -274,8 +284,8 @@ func convertSimpleMiscellaneousFields(policyGenTemp *pgtformat.PolicyGenTemplate
 
 	acmGenTempConversion.PolicyDefaults.Severity = "low"
 	acmGenTempConversion.PolicyDefaults.NamespaceSelector = acmformat.NamespaceSelector{Exclude: []string{"kube-*"}, Include: []string{"*"}}
-	acmGenTempConversion.PolicyDefaults.EvaluationInterval.Compliant = "10m"
-	acmGenTempConversion.PolicyDefaults.EvaluationInterval.NonCompliant = "10s"
+	acmGenTempConversion.PolicyDefaults.EvaluationInterval.Compliant = policyGenTemp.Spec.EvaluationInterval.Compliant
+	acmGenTempConversion.PolicyDefaults.EvaluationInterval.NonCompliant = policyGenTemp.Spec.EvaluationInterval.NonCompliant
 
 	acmGenTempConversion.Metadata.Name = rootName
 	acmGenTempConversion.PlacementBindingDefaults.Name = rootName + "-placement-binding"
