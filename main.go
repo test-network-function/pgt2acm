@@ -9,12 +9,12 @@ import (
 
 	"flag"
 
-	"github.com/edcdavid/pgt2acm/packages/acmformat"
-	"github.com/edcdavid/pgt2acm/packages/fileutils"
-	"github.com/edcdavid/pgt2acm/packages/labels"
-	"github.com/edcdavid/pgt2acm/packages/patches"
-	"github.com/edcdavid/pgt2acm/packages/pgtformat"
-	"github.com/edcdavid/pgt2acm/packages/stringhelper"
+	"github.com/test-network-function/pgt2acm/packages/acmformat"
+	"github.com/test-network-function/pgt2acm/packages/fileutils"
+	"github.com/test-network-function/pgt2acm/packages/labels"
+	"github.com/test-network-function/pgt2acm/packages/patches"
+	"github.com/test-network-function/pgt2acm/packages/pgtformat"
+	"github.com/test-network-function/pgt2acm/packages/stringhelper"
 	"gopkg.in/yaml.v3"
 )
 

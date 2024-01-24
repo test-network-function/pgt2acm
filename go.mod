@@ -1,4 +1,4 @@
-module github.com/edcdavid/pgt2acm
+module github.com/test-network-function/pgt2acm
 
 go 1.21.5
 
