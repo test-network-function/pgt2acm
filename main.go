@@ -14,6 +14,7 @@ import (
 	"github.com/test-network-function/pgt2acm/packages/labels"
 	"github.com/test-network-function/pgt2acm/packages/patches"
 	"github.com/test-network-function/pgt2acm/packages/pgtformat"
+	"github.com/test-network-function/pgt2acm/packages/renderpolicies"
 	"github.com/test-network-function/pgt2acm/packages/stringhelper"
 	"gopkg.in/yaml.v3"
 )
@@ -36,6 +37,7 @@ func main() {
 	var schema = flag.String("s", "", "the optional schema for all non base CRDs")
 	// Defines list of manifest kinds to which to pre-render patches to
 	var preRenderPatchKindString = flag.String("k", "", "the optional list of manifest kinds for which to pre-render patches")
+
 	// Parsing inputs
 	flag.Parse()
 
@@ -53,7 +55,8 @@ func main() {
 		os.Exit(1)
 	}
 	for _, file := range allFilesInInputPath {
-		kindType, err := fileutils.GetManifestKind(file)
+		var kindType fileutils.KindType
+		kindType, err = fileutils.GetManifestKind(file)
 		if err != nil {
 			fmt.Printf("Could not get manifest kind for file:%s, err: %s", file, err)
 			os.Exit(1)
@@ -62,15 +65,29 @@ func main() {
 			continue
 		}
 		// Get the relative path
-		relativePath, err := filepath.Rel(*inputFile, file)
+		var relativePath string
+		relativePath, err = filepath.Rel(*inputFile, file)
 		if err != nil {
 			fmt.Printf("Error getting relative path, err:%s\n", err)
-			continue
+			os.Exit(1)
 		}
 		err = convertPGTtoACM(*outputDir, file, filepath.Join(*outputDir, fileutils.PrefixLastPathComponent(relativePath, "acm-")), *schema, preRenderPatchKindList)
 		if err != nil {
 			fmt.Printf("failed to convert PGT to ACMGen, err=%s", err)
+			os.Exit(1)
 		}
+	}
+
+	err = renderpolicies.RenderAndWriteTemplateToYAML(*outputDir, renderpolicies.AcmGenRenderedYAMLFileName)
+	if err != nil {
+		fmt.Printf("Could generate ACMGen policies, err: %s", err)
+		os.Exit(1)
+	}
+
+	err = renderpolicies.RenderAndWriteTemplateToYAML(*inputFile, renderpolicies.PgtRenderedYAMLFileName)
+	if err != nil {
+		fmt.Printf("Could generate PGT policies, err: %s", err)
+		os.Exit(1)
 	}
 }
 
@@ -161,7 +178,7 @@ func RenderPatchesInManifestForSpecifiedKinds(policyGenTemp *pgtformat.PolicyGen
 
 	renamedpathRelativeToOutputDir, err := fileutils.RenderMCPLines(pathRelativeToOutputDir, policyGenTemp.Spec.Mcp)
 	if err != nil {
-		return fmt.Errorf("cannot comment out MCP lines, err:%s", err)
+		return fmt.Errorf("cannot render MCP lines, err:%s", err)
 	}
 	relativeManifestPath, err := filepath.Rel(outputDir, renamedpathRelativeToOutputDir)
 	if err != nil {

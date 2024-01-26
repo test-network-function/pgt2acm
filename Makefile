@@ -8,3 +8,5 @@ test: build
 clean:
 	rm -r test/acmgen-output
 	rm pgt2acm
+fetch-schema:
+	kustomize openapi fetch > test/cluster-schema.json
