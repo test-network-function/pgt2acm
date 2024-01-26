@@ -23,10 +23,22 @@ Mandatory parameters:
 Optional parameters:
 <schema>: the path to an optional open API schema
 <kind1,kind2,...,kindn>: comma delimited list of manifest kinds to pre-render the patches for.
+-g: if present, generates ACM policies for PGT (acmgen-out.yaml) and ACM Gen (pgt-out.yaml) templates
 
 Note:
 The output directory needs to contain all source CRs manifest in the <output-dir>/source-crs sub-directory
 ```
+
+The -g option also requires `PolicyGenerator` and `PolicyGenTemplate` executables in the proper subdirectory as specified by Kustomize plugin API. The kustomize subdirectory of this project provides both executable in the correct relative path. To use them, use the following kustomize environment variable when running pgt2acm:
+```
+KUSTOMIZE_PLUGIN_HOME=$(pwd)/kustomize 
+```
+so for instance, a example to generate policies for PGT and ACM Gen would be: 
+```
+KUSTOMIZE_PLUGIN_HOME=$(pwd)/../../pgt2acm-new/kustomize   ../../pgt2acm-new/pgt2acm -i policygentemplates -o acmgentemplates -s ../../pgt2acm-new/test/newptpconfig-schema.json -k PtpConfig
+
+```
+
 ## conversion steps
 
 ### Convert simple fields
