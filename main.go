@@ -20,12 +20,27 @@ import (
 )
 
 func usage() {
-	fmt.Println("Usage:\npgt2adm -i <input_dir> -o <output_dir> [-s <schema> -k <kind1,kind2,...,kindn>]")
+	fmt.Println("Usage:\npgt2adm -i <input_dir> -o <output_dir> [-s <schema> -k <kind1,kind2,...,kindn>] -g")
 	fmt.Println("\nMandatory parameters:\n<input_dir>: the directory holding the PGT template")
 	fmt.Println("<output_dir>: the directory holding the ACM Gen template")
 	fmt.Println("\nOptional parameters:\n<schema>: the path to an optional open API schema")
 	fmt.Println("<kind1,kind2,...,kindn>: comma delimited list of manifest kinds to pre-render the patches for.")
+	fmt.Printf("-g: if present, generates ACM policies for PGT (%s) and ACM Gen (%s) templates\n", renderpolicies.AcmGenRenderedYAMLFileName, renderpolicies.PgtRenderedYAMLFileName)
 	fmt.Println("\nNote:\nThe output directory needs to contain all source CRs manifest in the <output-dir>/source-crs sub-directory")
+}
+
+func processFlags(inputFile, outputDir, preRenderPatchKindString *string) (preRenderPatchKindList []string) {
+	// Parsing inputs
+	flag.Parse()
+	if inputFile == nil ||
+		outputDir == nil || *inputFile == "" || *outputDir == "" {
+		usage()
+		os.Exit(1)
+	}
+	if preRenderPatchKindString != nil {
+		preRenderPatchKindList = strings.Split(*preRenderPatchKindString, ",")
+	}
+	return preRenderPatchKindList
 }
 
 func main() {
@@ -37,17 +52,10 @@ func main() {
 	var schema = flag.String("s", "", "the optional schema for all non base CRDs")
 	// Defines list of manifest kinds to which to pre-render patches to
 	var preRenderPatchKindString = flag.String("k", "", "the optional list of manifest kinds for which to pre-render patches")
+	// Defines list of manifest kinds to which to pre-render patches to
+	var generateACMPolicies = flag.Bool("g", false, "optionally generates ACM policies for PGT and ACM Gen templates")
 
-	// Parsing inputs
-	flag.Parse()
-
-	if inputFile == nil ||
-		outputDir == nil || *inputFile == "" || *outputDir == "" {
-		usage()
-		os.Exit(1)
-	}
-
-	preRenderPatchKindList := strings.Split(*preRenderPatchKindString, ",")
+	preRenderPatchKindList := processFlags(inputFile, outputDir, preRenderPatchKindString)
 
 	allFilesInInputPath, err := fileutils.GetAllYAMLFilesInPath(*inputFile)
 	if err != nil {
@@ -78,16 +86,18 @@ func main() {
 		}
 	}
 
-	err = renderpolicies.RenderAndWriteTemplateToYAML(*outputDir, renderpolicies.AcmGenRenderedYAMLFileName)
-	if err != nil {
-		fmt.Printf("Could generate ACMGen policies, err: %s", err)
-		os.Exit(1)
-	}
+	if generateACMPolicies != nil && *generateACMPolicies {
+		err = renderpolicies.RenderAndWriteTemplateToYAML(*outputDir, renderpolicies.AcmGenRenderedYAMLFileName)
+		if err != nil {
+			fmt.Printf("Could generate ACMGen policies, err: %s", err)
+			os.Exit(1)
+		}
 
-	err = renderpolicies.RenderAndWriteTemplateToYAML(*inputFile, renderpolicies.PgtRenderedYAMLFileName)
-	if err != nil {
-		fmt.Printf("Could generate PGT policies, err: %s", err)
-		os.Exit(1)
+		err = renderpolicies.RenderAndWriteTemplateToYAML(*inputFile, renderpolicies.PgtRenderedYAMLFileName)
+		if err != nil {
+			fmt.Printf("Could generate PGT policies, err: %s", err)
+			os.Exit(1)
+		}
 	}
 }
 
