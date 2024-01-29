@@ -1,8 +1,10 @@
 package labels
 
 import (
+	"encoding/json"
 	"fmt"
 
+	yamlconv "github.com/ghodss/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -48,9 +50,14 @@ func OutputGeneric(selector labels.Selector) (output map[string]interface{}, err
 	if err != nil {
 		return output, err
 	}
-	yamlText, err := yaml.Marshal(labelSelector)
+	jsonText, err := json.Marshal(labelSelector)
 	if err != nil {
-		return output, fmt.Errorf("failed to unMarshall label selector: %v, err: %s", selector, err)
+		return output, fmt.Errorf("failed to unMarshall label selector to json: %v, err: %s", selector, err)
+	}
+	var yamlText []byte
+	yamlText, err = yamlconv.JSONToYAML(jsonText)
+	if err != nil {
+		return output, fmt.Errorf("failed to convert label selector to yaml: %v, err: %s", selector, err)
 	}
 	err = yaml.Unmarshal(yamlText, &output)
 	if err != nil {

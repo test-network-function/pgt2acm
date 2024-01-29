@@ -9,15 +9,13 @@ policyDefaults:
     namespace: ztp-group
     placement:
         labelSelector:
-            matchexpressions:
+            matchExpressions:
                 - key: du-profile
                   operator: In
                   values:
                     - latest
                 - key: group-du-standard
                   operator: Exists
-                  values: []
-            matchlabels: {}
     remediationAction: inform
     severity: low
     namespaceSelector:
