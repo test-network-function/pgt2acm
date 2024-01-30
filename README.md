@@ -12,21 +12,20 @@ An output directory should:
 
 ## Usage
 ```console
-[pgt2acm]$ ./pgt2acm 
-Usage:
-pgt2adm -i <input_dir> -o <output_dir> [-s <schema> -k <kind1,kind2,...,kindn>]
-
-Mandatory parameters:
-<input_dir>: the directory holding the PGT template
-<output_dir>: the directory holding the ACM Gen template
-
-Optional parameters:
-<schema>: the path to an optional open API schema
-<kind1,kind2,...,kindn>: comma delimited list of manifest kinds to pre-render the patches for.
--g: if present, generates ACM policies for PGT (acmgen-out.yaml) and ACM Gen (pgt-out.yaml) templates
-
-Note:
-The output directory needs to contain all source CRs manifest in the <output-dir>/source-crs sub-directory
+Usage of ./pgt2acm:
+  -c string
+        the optional comma delimited list of reference source CRs templates
+  -g    optionally generates ACM policies for PGT and ACM Gen templates
+  -i string
+        the PGT input file
+  -k string
+        the optional list of manifest kinds for which to pre-render patches
+  -n string
+        the optional ns.yaml file path (default "ns.yaml")
+  -o string
+        the ACMGen output Directory
+  -s string
+        the optional schema for all non base CRDs
 ```
 
 The -g option also requires `PolicyGenerator` and `PolicyGenTemplate` executables in the proper subdirectory as specified by Kustomize plugin API. The kustomize subdirectory of this project provides both executable in the correct relative path. To use them, use the following kustomize environment variable when running pgt2acm:

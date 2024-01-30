@@ -9,6 +9,7 @@ import (
 
 	"flag"
 
+	"github.com/test-network-function/pgt2acm/copydir"
 	"github.com/test-network-function/pgt2acm/packages/acmformat"
 	"github.com/test-network-function/pgt2acm/packages/fileutils"
 	"github.com/test-network-function/pgt2acm/packages/labels"
@@ -19,7 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func usage() {
+/*func usage() {
 	fmt.Println("Usage:\npgt2adm -i <input_dir> -o <output_dir> [-s <schema> -k <kind1,kind2,...,kindn>] -g")
 	fmt.Println("\nMandatory parameters:\n<input_dir>: the directory holding the PGT template")
 	fmt.Println("<output_dir>: the directory holding the ACM Gen template")
@@ -27,20 +28,23 @@ func usage() {
 	fmt.Println("<kind1,kind2,...,kindn>: comma delimited list of manifest kinds to pre-render the patches for.")
 	fmt.Printf("-g: if present, generates ACM policies for PGT (%s) and ACM Gen (%s) templates\n", renderpolicies.AcmGenRenderedYAMLFileName, renderpolicies.PgtRenderedYAMLFileName)
 	fmt.Println("\nNote:\nThe output directory needs to contain all source CRs manifest in the <output-dir>/source-crs sub-directory")
-}
+}*/
 
-func processFlags(inputFile, outputDir, preRenderPatchKindString *string) (preRenderPatchKindList []string) {
+func processFlags(inputFile, outputDir, preRenderPatchKindString, sourceCRListString *string) (preRenderPatchKindList, preRenderSourceCRList []string) {
 	// Parsing inputs
 	flag.Parse()
 	if inputFile == nil ||
 		outputDir == nil || *inputFile == "" || *outputDir == "" {
-		usage()
+		flag.Usage()
 		os.Exit(1)
 	}
 	if preRenderPatchKindString != nil {
 		preRenderPatchKindList = strings.Split(*preRenderPatchKindString, ",")
 	}
-	return preRenderPatchKindList
+	if sourceCRListString != nil {
+		preRenderSourceCRList = strings.Split(*sourceCRListString, ",")
+	}
+	return preRenderPatchKindList, preRenderSourceCRList
 }
 
 func main() {
@@ -54,42 +58,48 @@ func main() {
 	var preRenderPatchKindString = flag.String("k", "", "the optional list of manifest kinds for which to pre-render patches")
 	// Defines list of manifest kinds to which to pre-render patches to
 	var generateACMPolicies = flag.Bool("g", false, "optionally generates ACM policies for PGT and ACM Gen templates")
+	// Defines ns.yaml file for templates
+	var NSYAML = flag.String("n", fileutils.NamespaceFileName, "the optional ns.yaml file path")
+	// Defines source-crs directory location
+	var sourceCRs = flag.String("c", "", "the optional comma delimited list of reference source CRs templates")
 
-	preRenderPatchKindList := processFlags(inputFile, outputDir, preRenderPatchKindString)
+	preRenderPatchKindList, preRenderSourceCRList := processFlags(inputFile, outputDir, preRenderPatchKindString, sourceCRs)
+
+	var err error
+	if sourceCRs != nil && *sourceCRs != "" {
+		for _, sourceCRsPath := range preRenderSourceCRList {
+			err = copydir.CopyDirectory(sourceCRsPath, filepath.Join(*outputDir, fileutils.SourceCRsDir))
+			if err != nil {
+				fmt.Printf("Could not copy source-crs, err: %s", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Copied source-cr at %s successfully\n", sourceCRsPath)
+		}
+	}
 
 	allFilesInInputPath, err := fileutils.GetAllYAMLFilesInPath(*inputFile)
 	if err != nil {
 		fmt.Printf("Could not get file list, err: %s", err)
 		os.Exit(1)
 	}
-	for _, file := range allFilesInInputPath {
-		var kindType fileutils.KindType
-		kindType, err = fileutils.GetManifestKind(file)
+	// convert all PGT files
+	err = convertAllPGTFiles(preRenderPatchKindList, allFilesInInputPath, inputFile, outputDir, schema)
+	if err != nil {
+		fmt.Printf("Could not convert PGT files, err: %s", err)
+		os.Exit(1)
+	}
+
+	if NSYAML != nil && *NSYAML != "" {
+		err = fileutils.CopyAndProcessNSAndKustomizationYAML(*NSYAML, *inputFile, *outputDir)
 		if err != nil {
-			fmt.Printf("Could not get manifest kind for file:%s, err: %s", file, err)
-			os.Exit(1)
-		}
-		if kindType.Kind != "PolicyGenTemplate" {
-			continue
-		}
-		// Get the relative path
-		var relativePath string
-		relativePath, err = filepath.Rel(*inputFile, file)
-		if err != nil {
-			fmt.Printf("Error getting relative path, err:%s\n", err)
-			os.Exit(1)
-		}
-		err = convertPGTtoACM(*outputDir, file, filepath.Join(*outputDir, fileutils.PrefixLastPathComponent(relativePath, "acm-")), *schema, preRenderPatchKindList)
-		if err != nil {
-			fmt.Printf("failed to convert PGT to ACMGen, err=%s", err)
-			os.Exit(1)
+			fmt.Printf("Could not post-process %s and %s files, err: %s", *NSYAML, fileutils.KustomizationFileName, err)
 		}
 	}
 
 	if generateACMPolicies != nil && *generateACMPolicies {
 		err = renderpolicies.RenderAndWriteTemplateToYAML(*outputDir, renderpolicies.AcmGenRenderedYAMLFileName)
 		if err != nil {
-			fmt.Printf("Could generate ACMGen policies, err: %s", err)
+			fmt.Printf("Could not generate ACMGen policies, err: %s", err)
 			os.Exit(1)
 		}
 
@@ -99,6 +109,30 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func convertAllPGTFiles(preRenderPatchKindList, allFilesInInputPath []string, inputFile, outputDir, schema *string) (err error) {
+	for _, file := range allFilesInInputPath {
+		var kindType fileutils.KindType
+		kindType, err = fileutils.GetManifestKind(file)
+		if err != nil {
+			return fmt.Errorf("could not get manifest kind for file:%s, err: %s", file, err)
+		}
+		if kindType.Kind != "PolicyGenTemplate" {
+			continue
+		}
+		// Get the relative path
+		var relativePath string
+		relativePath, err = filepath.Rel(*inputFile, file)
+		if err != nil {
+			return fmt.Errorf("error getting relative path, err:%s", err)
+		}
+		err = convertPGTtoACM(*outputDir, file, filepath.Join(*outputDir, fileutils.PrefixLastPathComponent(relativePath, fileutils.ACMPrefix)), *schema, preRenderPatchKindList)
+		if err != nil {
+			return fmt.Errorf("failed to convert PGT to ACMGen, err=%s", err)
+		}
+	}
+	return nil
 }
 
 // Converts an PGT file to a ACM Gen Template file

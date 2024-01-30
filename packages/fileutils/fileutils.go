@@ -2,6 +2,7 @@ package fileutils
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -13,14 +14,15 @@ import (
 const (
 	DefaultFileWritePermissions = 0o600
 	DefaultDirWritePermissions  = 0o755
+	ACMPrefix                   = "acm-"
+	mcpPattern                  = "$mcp"
+	SourceCRsDir                = "source-crs"
+	KustomizationFileName       = "kustomization.yaml"
+	NamespaceFileName           = "ns.yaml"
 )
 
 // Comments out lines containing the "$mcp" keyword
 func CommentOutMCPLines(inputFile string) (outputFile string, patchList []map[string]interface{}, err error) {
-	const (
-		mcpPattern = "$mcp"
-	)
-
 	contents, err := os.ReadFile(inputFile)
 	if err != nil {
 		return outputFile, patchList, fmt.Errorf("unable to open file: %s, err: %s ", inputFile, err)
@@ -48,8 +50,7 @@ func CommentOutMCPLines(inputFile string) (outputFile string, patchList []map[st
 	outputFile = strings.TrimSuffix(inputFile, ".yaml") + "-SetSelector.yaml"
 	err = os.WriteFile(outputFile, []byte(modifiedString), DefaultFileWritePermissions)
 	if err != nil {
-		fmt.Printf("Error writing to file: %s, err: %s", inputFile, err)
-		return "", patchList, err
+		return "", patchList, fmt.Errorf("error writing to file: %s, err: %s", inputFile, err)
 	}
 	fmt.Printf("Wrote converted ACM template: %s\n", outputFile)
 	return outputFile, patchList, nil
@@ -73,8 +74,7 @@ func RenderMCPLines(inputFile, mcp string) (outputFile string, err error) {
 
 	err = os.WriteFile(outputFile, contents, DefaultFileWritePermissions)
 	if err != nil {
-		fmt.Printf("Error writing to file: %s, err: %s", inputFile, err)
-		return "", err
+		return "", fmt.Errorf("error writing to file: %s, err: %s", inputFile, err)
 	}
 	fmt.Printf("Wrote converted ACM template: %s\n", outputFile)
 	return outputFile, nil
@@ -143,4 +143,130 @@ func GetAnnotationsOnly(filePath string) (annotations AnnotationsOnly, err error
 		return annotations, fmt.Errorf("could not parse %s as yaml: %s", filePath, err)
 	}
 	return annotations, nil
+}
+
+const defaultPlacementBindings = `
+---
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: global
+  namespace: ztp-common
+spec:
+  clusterSet: global
+---
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: global
+  namespace: ztp-group
+spec:
+  clusterSet: global
+---
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: global
+  namespace: ztp-site
+spec:
+  clusterSet: global
+`
+
+func AddDefaultPlacementBindingsToNSFile(namespaceFilePath, outputDir string) (err error) {
+	fullNamespaceFilePath := filepath.Join(outputDir, namespaceFilePath)
+	fileContent, err := os.ReadFile(fullNamespaceFilePath)
+	if err != nil {
+		return fmt.Errorf("could not read %s: %s", fullNamespaceFilePath, err)
+	}
+
+	fileContent = []byte(string(fileContent) + defaultPlacementBindings)
+	err = os.WriteFile(fullNamespaceFilePath, fileContent, DefaultFileWritePermissions)
+	if err != nil {
+		return fmt.Errorf("error writing to file: %s, err: %s", fullNamespaceFilePath, err)
+	}
+	fmt.Printf("Added default placement binding to:%s\n", fullNamespaceFilePath)
+	return nil
+}
+
+type Kustomization struct {
+	Generators []string `yaml:"generators"`
+	Resources  []string `yaml:"resources"`
+}
+
+func RenameACMGenTemplatesInKustomization(inputFile, outputDir string) (err error) {
+	inputKustomization := filepath.Join(inputFile, KustomizationFileName)
+	fileContent, err := os.ReadFile(inputKustomization)
+	if err != nil {
+		return fmt.Errorf("could not read %s: %s", inputKustomization, err)
+	}
+
+	// Unmarshal YAML data into a struct
+	kustomization := Kustomization{}
+	err = yaml.Unmarshal(fileContent, &kustomization)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling yaml file: %s, err %v", inputKustomization, err)
+	}
+	updatedKustomization := Kustomization{}
+	for _, g := range kustomization.Generators {
+		updatedKustomization.Generators = append(updatedKustomization.Generators, PrefixLastPathComponent(g, ACMPrefix))
+	}
+	// Copy all resources to destination directory
+	for _, r := range kustomization.Resources {
+		_, err = Copy(filepath.Join(inputFile, r), filepath.Join(outputDir, r))
+		if err != nil {
+			return fmt.Errorf("could not copy file from %s to %s", filepath.Join(inputFile, r), filepath.Join(outputDir, r))
+		}
+		updatedKustomization.Resources = append(updatedKustomization.Resources, r)
+		fmt.Printf("Wrote Kustomization resource: %s\n", filepath.Join(outputDir, r))
+	}
+	// Marshal the struct back to YAML
+	outputContent, err := yaml.Marshal(updatedKustomization)
+	if err != nil {
+		return fmt.Errorf("error marshaling YAML content, err: %v", err)
+	}
+	outputKustomization := filepath.Join(outputDir, KustomizationFileName)
+	err = os.WriteFile(outputKustomization, outputContent, DefaultFileWritePermissions)
+	if err != nil {
+		return fmt.Errorf("error writing to file: %s, err: %s", outputKustomization, err)
+	}
+	fmt.Printf("Wrote Updated Kustomization file: %s\n", outputKustomization)
+	return nil
+}
+
+func CopyAndProcessNSAndKustomizationYAML(nsFilePath, inputFile, outputDir string) (err error) {
+	err = RenameACMGenTemplatesInKustomization(inputFile, outputDir)
+	if err != nil {
+		return fmt.Errorf("could not rename generators in kustomization file, err: %s", err)
+	}
+	err = AddDefaultPlacementBindingsToNSFile(nsFilePath, outputDir)
+	if err != nil {
+		return fmt.Errorf("could not add placement bindings in NS file file, err: %s", err)
+	}
+	return nil
+}
+
+// function found at https://opensource.com/article/18/6/copying-files-go
+func Copy(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
