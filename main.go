@@ -9,7 +9,6 @@ import (
 
 	"flag"
 
-	"github.com/test-network-function/pgt2acm/copydir"
 	"github.com/test-network-function/pgt2acm/packages/acmformat"
 	"github.com/test-network-function/pgt2acm/packages/fileutils"
 	"github.com/test-network-function/pgt2acm/packages/labels"
@@ -67,13 +66,10 @@ func main() {
 
 	var err error
 	if sourceCRs != nil && *sourceCRs != "" {
-		for _, sourceCRsPath := range preRenderSourceCRList {
-			err = copydir.CopyDirectory(sourceCRsPath, filepath.Join(*outputDir, fileutils.SourceCRsDir))
-			if err != nil {
-				fmt.Printf("Could not copy source-crs, err: %s", err)
-				os.Exit(1)
-			}
-			fmt.Printf("Copied source-cr at %s successfully\n", sourceCRsPath)
+		err = fileutils.CopySourceCrs(*inputFile, *outputDir, preRenderSourceCRList)
+		if err != nil {
+			fmt.Printf("Could not copy source-crs files, err: %s", err)
+			os.Exit(1)
 		}
 	}
 

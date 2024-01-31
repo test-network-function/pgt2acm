@@ -112,13 +112,12 @@ issues:
     # Ignore line length for string assignments (do not try and wrap regex definitions)
     - linters:
         - lll
-      source: "^(.*= (\".*\"|`.*`))$"
+      source: '^(.*= (".*"|`.*`))$'
     # https://github.com/go-critic/go-critic/issues/926
     - linters:
         - gocritic
       text: "unnecessaryDefer:"
     # Ignore static strings in tests
-
 
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration

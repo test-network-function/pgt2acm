@@ -1,19 +1,16 @@
 // The content of this file was copied from https://stackoverflow.com/questions/51779243/copy-a-folder-in-go
-package copydir
+package fileutils
 
 import (
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"syscall"
-
-	"github.com/test-network-function/pgt2acm/packages/fileutils"
 )
 
 func CopyDirectory(scrDir, dest string) error {
-	err := CreateIfNotExists(dest, fileutils.DefaultDirWritePermissions)
+	err := CreateIfNotExists(dest, DefaultDirWritePermissions)
 	if err != nil {
 		return err
 	}
@@ -38,7 +35,7 @@ func CopyDirectory(scrDir, dest string) error {
 
 		switch fileInfo.Mode() & os.ModeType {
 		case os.ModeDir:
-			err = CreateIfNotExists(destPath, fileutils.DefaultDirWritePermissions)
+			err = CreateIfNotExists(destPath, DefaultDirWritePermissions)
 			if err != nil {
 				return err
 			}
@@ -52,7 +49,7 @@ func CopyDirectory(scrDir, dest string) error {
 				return err
 			}
 		default:
-			err = Copy(sourcePath, destPath)
+			_, err = Copy(sourcePath, destPath)
 			if err != nil {
 				return err
 			}
@@ -78,7 +75,7 @@ func CopyDirectory(scrDir, dest string) error {
 	return nil
 }
 
-func Copy(srcFile, dstFile string) error {
+/*func Copy(srcFile, dstFile string) error {
 	out, err := os.Create(dstFile)
 	if err != nil {
 		return err
@@ -99,7 +96,7 @@ func Copy(srcFile, dstFile string) error {
 	}
 
 	return nil
-}
+}*/
 
 func Exists(filePath string) bool {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
