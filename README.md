@@ -111,7 +111,7 @@ Now that we have:
 
 We can run the conversion by running the following command:
 ```
- KUSTOMIZE_PLUGIN_HOME=$(pwd)/../../pgt2acm/kustomize   pgt2acm -i mydir/policygentemplates -o mydir/acmgentemplates -s /tmp/newptpconfig-schema.json -k PtpConfig -c /tmp/source-crs
+ KUSTOMIZE_PLUGIN_HOME=$(pwd)/../../pgt2acm/kustomize   pgt2acm -i mydir/policygentemplates -o mydir/acmgentemplates -s /tmp/newptpconfig-schema.json -k PtpConfig -c mydir/policygentemplates/source-crs,/tmp/source-crs
 ``` 
 
 `KUSTOMIZE_PLUGIN_HOME=$(pwd)/../../pgt2acm-new/kustomize` : indicates the path to a Kustomize plugin directory structure. For convenience, pecompiled binaries and directories are provided with this project in the (kustomize)[kustomize] subdirectory  
@@ -121,7 +121,7 @@ We can run the conversion by running the following command:
 `-o policygentemplates` : the destination ACM Gen templates directory to be created
 `-s /tmp/newptpconfig-schema.json` : the Kustomize schema containing definitions for all objects with list that need to be patched
 `-k PtpConfig` : the comma separated list of objects containing list that need to be patched
-`-c /tmp/source-crs` : the directory containing the source-crs corresponding to the template version 
+`-c mydir/policygentemplates/source-crs,/tmp/source-crs` : the directories containing the source-crs corresponding to the template version. In this case the PGT directory contains some custom templates, they are added as the first path in the list of source-crs. The reference source-crs should be added last (any order will work, but will produce spurious "skipping" logs)
 
 A successful conversion output looks like:
 ```
