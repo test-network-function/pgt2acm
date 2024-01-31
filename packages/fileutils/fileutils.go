@@ -257,8 +257,8 @@ func Copy(src, dst string) (int64, error) {
 		return 0, fmt.Errorf("%s is not a regular file", src)
 	}
 
-	if FileExists(dst) {
-		fmt.Printf("Skipping file: %s, already exists", dst)
+	if Exists(dst) {
+		fmt.Printf("Skipping file: %s, already exists\n", dst)
 		return 0, nil
 	}
 
@@ -277,26 +277,21 @@ func Copy(src, dst string) (int64, error) {
 	return nBytes, err
 }
 
-func FileExists(filePath string) bool {
-	_, err := os.Stat(filePath)
-	return !os.IsNotExist(err)
-}
-
 func CopySourceCrs(inputFile, outputDir string, preRenderSourceCRList []string) (err error) {
 	for _, sourceCRsPath := range preRenderSourceCRList {
 		err = CopyDirectory(sourceCRsPath, filepath.Join(outputDir, SourceCRsDir))
 		if err != nil {
-			fmt.Printf("Could not copy source-crs to ACM directory, err: %s", err)
+			fmt.Printf("Could not copy source-crs to %s directory, err: %s", err, filepath.Join(outputDir, SourceCRsDir))
 			os.Exit(1)
 		}
-		fmt.Printf("Copied source-cr at %s to ACM directory successfully\n", sourceCRsPath)
+		fmt.Printf("Copied source-cr at %s to %s directory successfully\n", sourceCRsPath, filepath.Join(outputDir, SourceCRsDir))
 
 		err = CopyDirectory(sourceCRsPath, filepath.Join(inputFile, SourceCRsDir))
 		if err != nil {
-			fmt.Printf("Could not copy source-crs to PGT directory, err: %s", err)
+			fmt.Printf("Could not copy source-crs to %s directory, err: %s", err, filepath.Join(inputFile, SourceCRsDir))
 			os.Exit(1)
 		}
-		fmt.Printf("Copied source-cr at %s to PGT directory successfully\n", sourceCRsPath)
+		fmt.Printf("Copied source-cr at %s to %s directory successfully\n", sourceCRsPath, filepath.Join(inputFile, SourceCRsDir))
 	}
 	return nil
 }
