@@ -19,6 +19,8 @@
           "description": "PtpConfigSpec defines the desired state of PtpConfig",
           "properties": {
             "profile": {
+              "x-kubernetes-patch-merge-key": "name",
+              "x-kubernetes-patch-strategy": "merge",
               "items": {
                 "properties": {
                   "interface": {
@@ -96,15 +98,17 @@
                 ],
                 "type": "object"
               },
-              "type": "array",
-              "x-kubernetes-patch-merge-key": "name",
-              "x-kubernetes-patch-strategy": "merge"
+              "type": "array"
             },
             "recommend": {
+              "x-kubernetes-patch-merge-key": "profile",
+              "x-kubernetes-patch-strategy": "merge",
               "items": {
                 "properties": {
                   "match": {
                     "items": {
+                      "x-kubernetes-patch-merge-key": "nodeName",
+                      "x-kubernetes-patch-strategy": "merge",
                       "properties": {
                         "nodeLabel": {
                           "type": "string"
@@ -145,6 +149,8 @@
           "properties": {
             "matchList": {
               "description": "INSERT ADDITIONAL STATUS FIELD - define observed state of cluster Important: Run \"make\" to regenerate code after modifying this file",
+              "x-kubernetes-patch-merge-key": "nodeName",
+              "x-kubernetes-patch-strategy": "merge",
               "items": {
                 "properties": {
                   "nodeName": {
