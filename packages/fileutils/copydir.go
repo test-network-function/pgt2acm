@@ -75,29 +75,6 @@ func CopyDirectory(scrDir, dest string) error {
 	return nil
 }
 
-/*func Copy(srcFile, dstFile string) error {
-	out, err := os.Create(dstFile)
-	if err != nil {
-		return err
-	}
-
-	defer out.Close()
-
-	in, err := os.Open(srcFile)
-	if err != nil {
-		return err
-	}
-
-	defer in.Close()
-
-	_, err = io.Copy(out, in)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}*/
-
 func Exists(filePath string) bool {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return false

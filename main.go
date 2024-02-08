@@ -19,16 +19,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-/*func usage() {
-	fmt.Println("Usage:\npgt2adm -i <input_dir> -o <output_dir> [-s <schema> -k <kind1,kind2,...,kindn>] -g")
-	fmt.Println("\nMandatory parameters:\n<input_dir>: the directory holding the PGT template")
-	fmt.Println("<output_dir>: the directory holding the ACM Gen template")
-	fmt.Println("\nOptional parameters:\n<schema>: the path to an optional open API schema")
-	fmt.Println("<kind1,kind2,...,kindn>: comma delimited list of manifest kinds to pre-render the patches for.")
-	fmt.Printf("-g: if present, generates ACM policies for PGT (%s) and ACM Gen (%s) templates\n", renderpolicies.AcmGenRenderedYAMLFileName, renderpolicies.PgtRenderedYAMLFileName)
-	fmt.Println("\nNote:\nThe output directory needs to contain all source CRs manifest in the <output-dir>/source-crs sub-directory")
-}*/
-
 func processFlags(inputFile, outputDir, preRenderPatchKindString, sourceCRListString *string) (preRenderPatchKindList, preRenderSourceCRList []string) {
 	// Parsing inputs
 	flag.Parse()
