@@ -14,6 +14,7 @@ import (
 	"github.com/test-network-function/pgt2acm/packages/labels"
 	"github.com/test-network-function/pgt2acm/packages/patches"
 	"github.com/test-network-function/pgt2acm/packages/pgtformat"
+	"github.com/test-network-function/pgt2acm/packages/placement"
 	"github.com/test-network-function/pgt2acm/packages/renderpolicies"
 	"github.com/test-network-function/pgt2acm/packages/stringhelper"
 	"gopkg.in/yaml.v3"
@@ -157,10 +158,20 @@ func convertPGTtoACM(outputDir, inputFile, outputFile, schema string, preRenderP
 		if err != nil {
 			return err
 		}
-		acmGenTempConversion.PolicyDefaults.Placement.LabelSelector = labelSelector
+
+		// commented out until it is possible to add tolerations to placements via ACM Gen
+		// acmGenTempConversion.PolicyDefaults.Placement.LabelSelector = labelSelector
 
 		// Convert Miscelanous fields
 		convertSimpleMiscellaneousFields(&policyGenTemp, &acmGenTempConversion, rootName)
+
+		// starts creating child policies as soon as the managed cluster starts installing
+		var placementFilepathRelative string
+		placementFilepathRelative, err = placement.GeneratePlacementFile(newPolicy.Name, acmGenTempConversion.PolicyDefaults.Namespace, outputDir, labelSelector)
+		if err != nil {
+			return fmt.Errorf("error when generating placement file, err: %s", err)
+		}
+		acmGenTempConversion.PolicyDefaults.Placement.PlacementPath = placementFilepathRelative
 
 		// Apply patches on ACMGen since it is not yet supported officially
 		if len(acmGenTempConversion.Policies) > 0 {

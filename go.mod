@@ -9,7 +9,8 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/apimachinery v0.0.0-00010101000000-000000000000
+	k8s.io/apimachinery v0.26.1
+	open-cluster-management.io/api v0.12.0
 	sigs.k8s.io/kustomize/api v0.16.0
 	sigs.k8s.io/kustomize/kyaml v0.16.0
 	sigs.k8s.io/yaml v1.4.0
