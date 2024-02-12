@@ -46,12 +46,16 @@ func main() {
 	var schema = flag.String("s", "", "the optional schema for all non base CRDs")
 	// Defines list of manifest kinds to which to pre-render patches to
 	var preRenderPatchKindString = flag.String("k", "", "the optional list of manifest kinds for which to pre-render patches")
-	// Defines list of manifest kinds to which to pre-render patches to
+	// Optionally generates ACM policies for PGT and ACM Gen templates
 	var generateACMPolicies = flag.Bool("g", false, "optionally generates ACM policies for PGT and ACM Gen templates")
 	// Defines ns.yaml file for templates
 	var NSYAML = flag.String("n", fileutils.NamespaceFileName, "the optional ns.yaml file path")
 	// Defines source-crs directory location
 	var sourceCRs = flag.String("c", "", "the optional comma delimited list of reference source CRs templates")
+	// Optionally generate placement API template containing toleration for
+	//     - effect: NoSelect
+	//       key: cluster.open-cluster-management.io/unreachable
+	var workaroundPlacement = flag.Bool("w", false, "Optional workaround to generate placement API template containing cluster.open-cluster-management.io/unreachable toleration")
 
 	preRenderPatchKindList, preRenderSourceCRList := processFlags(inputFile, outputDir, preRenderPatchKindString, sourceCRs)
 
@@ -70,7 +74,7 @@ func main() {
 		os.Exit(1)
 	}
 	// convert all PGT files
-	err = convertAllPGTFiles(preRenderPatchKindList, allFilesInInputPath, inputFile, outputDir, schema)
+	err = convertAllPGTFiles(preRenderPatchKindList, allFilesInInputPath, inputFile, outputDir, schema, workaroundPlacement)
 	if err != nil {
 		fmt.Printf("Could not convert PGT files, err: %s", err)
 		os.Exit(1)
@@ -98,7 +102,7 @@ func main() {
 	}
 }
 
-func convertAllPGTFiles(preRenderPatchKindList, allFilesInInputPath []string, inputFile, outputDir, schema *string) (err error) {
+func convertAllPGTFiles(preRenderPatchKindList, allFilesInInputPath []string, inputFile, outputDir, schema *string, workaroundPlacement *bool) (err error) {
 	for _, file := range allFilesInInputPath {
 		var kindType fileutils.KindType
 		kindType, err = fileutils.GetManifestKind(file)
@@ -114,7 +118,7 @@ func convertAllPGTFiles(preRenderPatchKindList, allFilesInInputPath []string, in
 		if err != nil {
 			return fmt.Errorf("error getting relative path, err:%s", err)
 		}
-		err = convertPGTtoACM(*outputDir, file, filepath.Join(*outputDir, fileutils.PrefixLastPathComponent(relativePath, fileutils.ACMPrefix)), *schema, preRenderPatchKindList)
+		err = convertPGTtoACM(*outputDir, file, filepath.Join(*outputDir, fileutils.PrefixLastPathComponent(relativePath, fileutils.ACMPrefix)), *schema, preRenderPatchKindList, workaroundPlacement)
 		if err != nil {
 			return fmt.Errorf("failed to convert PGT to ACMGen, err=%s", err)
 		}
@@ -123,7 +127,7 @@ func convertAllPGTFiles(preRenderPatchKindList, allFilesInInputPath []string, in
 }
 
 // Converts an PGT file to a ACM Gen Template file
-func convertPGTtoACM(outputDir, inputFile, outputFile, schema string, preRenderPatchKindList []string) (err error) {
+func convertPGTtoACM(outputDir, inputFile, outputFile, schema string, preRenderPatchKindList []string, workaroundPlacement *bool) (err error) {
 	policyGenFileContent, err := os.ReadFile(inputFile)
 	if err != nil {
 		return fmt.Errorf("unable to open file: %s, err: %s ", inputFile, err)
@@ -159,19 +163,20 @@ func convertPGTtoACM(outputDir, inputFile, outputFile, schema string, preRenderP
 			return err
 		}
 
-		// commented out until it is possible to add tolerations to placements via ACM Gen
-		// acmGenTempConversion.PolicyDefaults.Placement.LabelSelector = labelSelector
-
 		// Convert Miscelanous fields
 		convertSimpleMiscellaneousFields(&policyGenTemp, &acmGenTempConversion, rootName)
 
-		// starts creating child policies as soon as the managed cluster starts installing
-		var placementFilepathRelative string
-		placementFilepathRelative, err = placement.GeneratePlacementFile(newPolicy.Name, acmGenTempConversion.PolicyDefaults.Namespace, outputDir, labelSelector)
-		if err != nil {
-			return fmt.Errorf("error when generating placement file, err: %s", err)
+		if workaroundPlacement != nil && !*workaroundPlacement {
+			acmGenTempConversion.PolicyDefaults.Placement.LabelSelector = labelSelector
+		} else {
+			// starts creating child policies as soon as the managed cluster starts installing
+			var placementFilepathRelative string
+			placementFilepathRelative, err = placement.GeneratePlacementFile(newPolicy.Name, acmGenTempConversion.PolicyDefaults.Namespace, outputDir, labelSelector)
+			if err != nil {
+				return fmt.Errorf("error when generating placement file, err: %s", err)
+			}
+			acmGenTempConversion.PolicyDefaults.Placement.PlacementPath = placementFilepathRelative
 		}
-		acmGenTempConversion.PolicyDefaults.Placement.PlacementPath = placementFilepathRelative
 
 		// Apply patches on ACMGen since it is not yet supported officially
 		if len(acmGenTempConversion.Policies) > 0 {

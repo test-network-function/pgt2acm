@@ -536,3 +536,12 @@ If the `PtpConfigSlave`.yaml manifest contains a `$mcp` keyword, a new manifest 
 ### Miscellaneous $names in manifests
 
 Some manifests contain `$name`, `$namespace`, etc... These keywords are used by PGT but are overwritten by the patch merging mechanism defined by [policy-generator-plugin](https://github.com/open-cluster-management-io/policy-generator-plugin), so they can be ignored.
+
+### Placement API Workaround
+
+Currently, the the managedCluster resource is first created with the following taint: 
+```
+    - effect: NoSelect
+      key: cluster.open-cluster-management.io/unreachable
+```
+As a result, the ACM placement API will not select it until the managed cluster is available. As a workaround, the pgt2am translator can generate a placement manifest that would include a `cluster.open-cluster-management.io/unreachable` toleration using the -w option
