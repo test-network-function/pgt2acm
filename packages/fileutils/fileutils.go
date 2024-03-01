@@ -248,6 +248,12 @@ func CopyAndProcessNSAndKustomizationYAML(nsFilePath, inputFile, outputDir strin
 
 // function found at https://opensource.com/article/18/6/copying-files-go
 func Copy(src, dst string) (int64, error) {
+	dstDir := filepath.Dir(dst)
+	err := CreateIfNotExists(dstDir, DefaultDirWritePermissions)
+	if err != nil {
+		return 0, fmt.Errorf("could not create destination directory %s", dstDir)
+	}
+
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return 0, err
