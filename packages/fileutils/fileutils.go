@@ -234,10 +234,14 @@ func RenameACMGenTemplatesInKustomization(inputFile, outputDir string) (err erro
 	return nil
 }
 
-func CopyAndProcessNSAndKustomizationYAML(nsFilePath, inputFile, outputDir string) (err error) {
+func CopyAndProcessNSAndKustomizationYAML(nsFilePath, inputFile, outputDir string, skipUpdateNs bool) (err error) {
 	err = RenameACMGenTemplatesInKustomization(inputFile, outputDir)
 	if err != nil {
 		return fmt.Errorf("could not rename generators in kustomization file, err: %s", err)
+	}
+	// No need to update ns.yaml, exiting early
+	if skipUpdateNs {
+		return nil
 	}
 	err = AddDefaultPlacementBindingsToNSFile(nsFilePath, outputDir)
 	if err != nil {

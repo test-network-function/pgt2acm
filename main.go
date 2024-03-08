@@ -50,6 +50,8 @@ func main() {
 	var generateACMPolicies = flag.Bool("g", false, "optionally generates ACM policies for PGT and ACM Gen templates")
 	// Defines ns.yaml file for templates
 	var NSYAML = flag.String("n", fileutils.NamespaceFileName, "the optional ns.yaml file path")
+	// optionally disables generating default placement in ns.yaml
+	var skipDefaultPlacementBindings = flag.Bool("p", false, "optionally disable generating default placement bindings in ns.yaml")
 	// Defines source-crs directory location
 	var sourceCRs = flag.String("c", "", "the optional comma delimited list of reference source CRs templates")
 	// Optionally generate placement API template containing toleration for
@@ -80,8 +82,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if NSYAML != nil && *NSYAML != "" {
-		err = fileutils.CopyAndProcessNSAndKustomizationYAML(*NSYAML, *inputFile, *outputDir)
+	if NSYAML != nil && *NSYAML != "" && skipDefaultPlacementBindings != nil {
+		err = fileutils.CopyAndProcessNSAndKustomizationYAML(*NSYAML, *inputFile, *outputDir, *skipDefaultPlacementBindings)
 		if err != nil {
 			fmt.Printf("Could not post-process %s and %s files, err: %s", *NSYAML, fileutils.KustomizationFileName, err)
 		}
