@@ -55,7 +55,7 @@ jobs:
         run: checkmake --config=.checkmake Makefile
 
       - name: Shfmt
-        run: shfmt -d *.sh script
+        run: shfmt -d scripts
 
       - name: Markdownlint
         uses: nosborn/github-action-markdown-cli@v3.3.0
