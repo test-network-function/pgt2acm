@@ -1,3 +1,8 @@
+.PHONY: all clean test
+.PHONY: \
+	lint \
+	build \
+	fetch-schema
 # Runs configured linters
 lint:
 	golangci-lint run --timeout 10m0s
