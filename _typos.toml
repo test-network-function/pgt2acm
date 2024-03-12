@@ -1,0 +1,6 @@
+[default.extend-words]
+iif = "iif"
+ono = "ono"
+
+[files]
+extend-exclude = ["depends-on.json", "go.mod"]
