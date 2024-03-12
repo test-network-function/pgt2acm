@@ -89,7 +89,7 @@ This example assumes that the following is available:
 
 ACM template are patching resource file differently, using Kustomize and the
 [Strategic Merge Patch](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md).
-In a nutshell, Kustomize will extract the kind, name and namspace of the
+In a nutshell, Kustomize will extract the kind, name and namespace of the
 resource patch defined in the PGT template. With this data, kustomize will
 identify the correct resource in the source-crs file that is to be patched and
 then apply the patch. If the resource in the patch declared by the template is
@@ -113,7 +113,7 @@ the source-crs directory
 
 Some resource need additional patch configuration for Kustomize to work:
 
-- extra directives are sometimes needed of the there is no schema avialable in
+- extra directives are sometimes needed of the there is no schema available in
   k8s to describe a field. This is the case with the PtpConfig plugins field
   which can be set to any yaml file. In this case, we can only replace the
   content so a replace directive should be added (see
