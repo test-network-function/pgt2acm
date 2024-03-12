@@ -205,7 +205,7 @@ func RenameACMGenTemplatesInKustomization(inputFile, outputDir string) (err erro
 	kustomization := Kustomization{}
 	err = yaml.Unmarshal(fileContent, &kustomization)
 	if err != nil {
-		return fmt.Errorf("error unmarshaling yaml file: %s, err %v", inputKustomization, err)
+		return fmt.Errorf("error unmarshalling yaml file: %s, err %v", inputKustomization, err)
 	}
 	updatedKustomization := Kustomization{}
 	for _, g := range kustomization.Generators {
