@@ -8,7 +8,14 @@ placementBindingDefaults:
 policyDefaults:
     namespace: ztp-group
     placement:
-        placementPath: group-du-standard-latest-config-policy-placement.yaml
+        labelSelector:
+            matchExpressions:
+                - key: du-profile
+                  operator: In
+                  values:
+                    - latest
+                - key: group-du-standard
+                  operator: Exists
     remediationAction: inform
     severity: low
     namespaceSelector:
