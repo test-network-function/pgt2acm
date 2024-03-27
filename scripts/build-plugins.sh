@@ -8,7 +8,7 @@ cd build || exit 1
 # Download ACM Policy Generator plugin repo
 git clone --depth 1 https://github.com/open-cluster-management-io/policy-generator-plugin.git
 # Download PGT repo
-git clone --depth 1 git@github.com:openshift-kni/cnf-features-deploy.git
+git clone --depth 1 https://github.com/openshift-kni/cnf-features-deploy.git
 # Build latest Policy Generator Template plugin executable
 cd cnf-features-deploy/ztp/policygenerator || exit 1
 make build
