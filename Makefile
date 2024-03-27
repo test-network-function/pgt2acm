@@ -17,9 +17,9 @@ build-darwin-arm64: build-plugins-darwin-arm64
 test: build
 	scripts/test.sh
 clean:
-	rm -r test/acmgen-output
-	rm pgt2acm
-	rm -rf build
+	rm -r test/acmgen-output || true
+	rm pgt2acm || true
+	rm -rf build || true
 fetch-schema:
 	kustomize openapi fetch > test/cluster-schema.json
 vet:
