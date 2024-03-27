@@ -24,9 +24,9 @@ fetch-schema:
 	kustomize openapi fetch > test/cluster-schema.json
 vet:
 	go vet ${GO_PACKAGES}
-build-plugins-darwin-arm64:
+build-plugins-darwin-arm64: clean
 	GOOS=darwin GOARCH=arm64 scripts/build-plugins.sh
-build-plugins-linux-amd64:
+build-plugins-linux-amd64: clean
 	GOOS=linux GOARCH=amd64 scripts/build-plugins.sh
-build-plugins:
+build-plugins: clean
 	scripts/build-plugins.sh
