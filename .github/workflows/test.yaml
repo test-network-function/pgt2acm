@@ -2,9 +2,9 @@ name: Test Incoming Changes
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 env:
   TERM: xterm-color
@@ -98,8 +98,11 @@ jobs:
         env:
           SHELL: /bin/bash
 
-      - name: Build binary
-        run: make build
+      - name: Build binary linux-amd64
+        run: make build-linux-amd64
 
-      - name: Basic test
-        run: make test
+      - name: Build binary darwin-arm64
+        run: sudo make clean && make build-darwin-arm64
+
+      - name: Build local architecture and Basic test
+        run: sudo make clean && make test
