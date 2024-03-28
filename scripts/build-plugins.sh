@@ -1,12 +1,13 @@
 #!/bin/bash
 
 ROOT=$(pwd)
+POLICY_GENERATOR_TAG=release-2.10
 
 rm -rf build || true
 mkdir build
 cd build || exit 1
 # Download ACM Policy Generator plugin repo
-git clone --depth 1 https://github.com/open-cluster-management-io/policy-generator-plugin.git
+git clone --depth 1 https://github.com/stolostron/policy-generator-plugin
 # Download PGT repo
 git clone --depth 1 https://github.com/openshift-kni/cnf-features-deploy.git
 # Build latest Policy Generator Template plugin executable
