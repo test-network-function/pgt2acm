@@ -99,10 +99,10 @@ jobs:
           SHELL: /bin/bash
 
       - name: Build binary linux-amd64
-        run: make build-linux-amd64
+        run: sudo make build-linux-amd64
 
       - name: Build binary darwin-arm64
-        run: make build-darwin-arm64
+        run: sudo make build-darwin-arm64
 
       - name: Build local architecture and Basic test
-        run: make test
+        run: sudo make test

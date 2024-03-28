@@ -19,7 +19,7 @@ test: build
 clean:
 	rm -r test/acmgen-output || true
 	rm pgt2acm || true
-	sudo rm -rf build || true
+	rm -rf build || true
 fetch-schema:
 	kustomize openapi fetch > test/cluster-schema.json
 vet:

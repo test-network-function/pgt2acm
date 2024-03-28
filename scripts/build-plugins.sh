@@ -7,7 +7,7 @@ rm -rf build || true
 mkdir build
 cd build || exit 1
 # Download ACM Policy Generator plugin repo
-git clone --depth 1 https://github.com/stolostron/policy-generator-plugin
+git clone --branch="$POLICY_GENERATOR_TAG" --depth 1 https://github.com/stolostron/policy-generator-plugin
 # Download PGT repo
 git clone --depth 1 https://github.com/openshift-kni/cnf-features-deploy.git
 # Build latest Policy Generator Template plugin executable
