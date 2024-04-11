@@ -1,6 +1,6 @@
 module github.com/test-network-function/pgt2acm
 
-go 1.20
+go 1.22.2
 
 // Pinned to kubernetes-1.27.4
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.27.4

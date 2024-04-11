@@ -1,2 +1,8 @@
 [files]
 extend-exclude = ["go.mod"]
+
+[default]
+extend-ignore-identifiers-re = [
+    # *sigh* this just isn't worth the cost of fixing
+    "convertPGTtoACM*",
+]
