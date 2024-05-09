@@ -109,7 +109,6 @@ func (m *ManifestPatcher) Validate() error {
 func setPatchDefaults(
 	apiVersion, kind, name, namespace string, patch map[string]interface{},
 ) error {
-	//nolint:goconst
 	errTemplate := `failed to retrieve the "%s" field from the manifest of name "` + name +
 		`"` + ` and kind "` + kind + `": %v`
 	setErrTemplate := `failed to set the "%s" field on the patch from the manifest of name "` +
